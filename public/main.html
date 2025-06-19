@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>출석 관리 시스템 - 메인</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <h1>출석 관리 시스템</h1>
+            <button id="logout-btn" onclick="authManager.handleLogout()"><span class="material-icons">logout</span>로그아웃</button>
+        </header>
+
+        <main>
+            <!-- 학급 관리 섹션 -->
+            <section id="class-section">
+                <div class="section-header">
+                    <h2>학급 관리</h2>
+                    <button id="add-class-btn"><span class="material-icons">add</span>새 학급 만들기</button>
+                </div>
+                <div id="class-list" class="class-list"></div>
+            </section>
+
+            <!-- 학급 상세 정보 섹션 -->
+            <section id="class-detail" class="hidden">
+                <div class="section-header">
+                    <h2>학급 상세 정보</h2>
+                    <button onclick="document.getElementById('class-detail').classList.add('hidden')"><span class="material-icons">close</span>닫기</button>
+                </div>
+                <form id="class-form">
+                    <div class="form-group">
+                        <label for="class-name">학급 이름</label>
+                        <input type="text" id="class-name" required>
+                    </div>
+                    <button type="submit" id="save-class-btn"><span class="material-icons">save</span>저장</button>
+                </form>
+
+                <!-- 선생님 목록 -->
+                <div class="list-section">
+                    <div class="section-header">
+                        <h3>선생님 목록</h3>
+                        <button id="add-teacher-btn"><span class="material-icons">person_add</span>선생님 추가</button>
+                    </div>
+                    <div id="teachers-list" class="list"></div>
+                </div>
+
+                <!-- 학생 목록 -->
+                <div class="list-section">
+                    <div class="section-header">
+                        <h3>학생 목록</h3>
+                        <button id="add-student-btn"><span class="material-icons">person_add</span>학생 추가</button>
+                    </div>
+                    <div id="students-list" class="list"></div>
+                </div>
+            </section>
+
+            <!-- 출석체크 섹션 -->
+            <section id="attendance-section" class="hidden">
+                <div class="section-header">
+                    <h2>출석체크</h2>
+                    <button onclick="document.getElementById('attendance-section').classList.add('hidden')"><span class="material-icons">close</span>닫기</button>
+                </div>
+                <div class="attendance-controls">
+                    <input type="date" id="attendance-date">
+                    <button id="save-attendance-btn"><span class="material-icons">save</span>저장</button>
+                </div>
+                <div id="attendance-list" class="attendance-list"></div>
+            </section>
+
+            <!-- 통계 섹션 -->
+            <section id="statistics-section" class="hidden">
+                <div class="section-header">
+                    <h2>출석 통계</h2>
+                    <button onclick="document.getElementById('statistics-section').classList.add('hidden')"><span class="material-icons">close</span>닫기</button>
+                </div>
+                <div class="statistics-controls">
+                    <input type="month" id="statistics-month">
+                    <button id="show-statistics-btn"><span class="material-icons">bar_chart</span>통계 보기</button>
+                </div>
+                <div id="statistics-content" class="statistics-content"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/class.js"></script>
+    <script src="/js/attendance.js"></script>
+    <script src="/js/statistics.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html> 

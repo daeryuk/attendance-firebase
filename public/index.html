@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>출석 관리 시스템</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div id="login-section" class="section">
+            <h2>로그인</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username">아이디</label>
+                    <input type="text" id="login-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">비밀번호</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="submit"><span class="material-icons">login</span>로그인</button>
+            </form>
+            <p>계정이 없으신가요? <a href="#" id="show-register">회원가입</a></p>
+        </div>
+
+        <div id="register-section" class="section hidden">
+            <h2>회원가입</h2>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="register-username">아이디</label>
+                    <input type="text" id="register-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">비밀번호</label>
+                    <input type="password" id="register-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-name">이름</label>
+                    <input type="text" id="register-name" required>
+                </div>
+                <button type="submit"><span class="material-icons">person_add</span>회원가입</button>
+            </form>
+            <p>이미 계정이 있으신가요? <a href="#" id="show-login">로그인</a></p>
+        </div>
+
+        <div id="main-section" class="section hidden">
+            <div class="header">
+                <h2>출석 관리 시스템</h2>
+                <button id="logout-btn"><span class="material-icons">logout</span>로그아웃</button>
+            </div>
+            
+            <div class="class-management">
+                <h3>학급 관리</h3>
+                <button id="add-class-btn"><span class="material-icons">add</span>새 학급 만들기</button>
+                <div id="class-list"></div>
+            </div>
+
+            <div id="class-detail" class="hidden">
+                <h3>학급 상세 정보</h3>
+                <div class="class-info">
+                    <input type="text" id="class-name" placeholder="학급 이름">
+                    <button id="save-class-btn"><span class="material-icons">save</span>저장</button>
+                </div>
+                
+                <div class="teachers-section">
+                    <h4>담임 선생님</h4>
+                    <button id="add-teacher-btn"><span class="material-icons">person_add</span>선생님 추가</button>
+                    <div id="teachers-list"></div>
+                </div>
+
+                <div class="students-section">
+                    <h4>학생 목록</h4>
+                    <button id="add-student-btn"><span class="material-icons">person_add</span>학생 추가</button>
+                    <div id="students-list"></div>
+                </div>
+            </div>
+
+            <div id="attendance-section" class="hidden">
+                <h3>출석 관리</h3>
+                <div id="attendance-list"></div>
+            </div>
+
+            <div id="statistics-section" class="hidden">
+                <h3>통계</h3>
+                <div id="calendar"></div>
+                <div id="attendance-stats"></div>
+                <div id="long-term-absence"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/class.js"></script>
+    <script src="js/attendance.js"></script>
+    <script src="js/statistics.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html> 
