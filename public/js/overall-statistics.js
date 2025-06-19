@@ -37,20 +37,19 @@ class OverallStatisticsManager {
 
     async loadOverallStatistics() {
         try {
-            const response = await fetch('/api/statistics/overall', {
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                const stats = await response.json();
-                this.renderOverallStatistics(stats);
-            } else if (response.status === 401) {
-                // 로그인되지 않은 상태 - 로그인 페이지로 이동
-                document.getElementById('main-section').classList.add('hidden');
-                document.getElementById('login-section').classList.remove('hidden');
-            }
+            const classesSnap = await firebase.database().ref('classes').once('value');
+            const studentsSnap = await firebase.database().ref('students').once('value');
+            const teachersSnap = await firebase.database().ref('teachers').once('value');
+            const attendancesSnap = await firebase.database().ref('attendances').once('value');
+            const totalClasses = classesSnap.numChildren();
+            const totalStudents = studentsSnap.numChildren();
+            const totalTeachers = teachersSnap.numChildren();
+            let totalAttendance = 0;
+            attendancesSnap.forEach(() => totalAttendance++);
+            // 평균 출석률 등은 필요에 따라 계산
+            this.renderOverallStatistics({ totalClasses, totalStudents, totalTeachers, totalAttendance });
         } catch (error) {
-            console.error('전체 통계 로드 에러:', error);
+            alert('전체 통계 로드에 실패했습니다.');
         }
     }
 

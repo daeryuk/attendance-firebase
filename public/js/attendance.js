@@ -69,40 +69,58 @@ class AttendanceManager {
     }
 
     async loadStudents() {
-        // 이미 로딩 중이면 중복 호출 방지
-        if (this.isLoading) {
-            console.log('이미 학생 목록을 로딩 중입니다.');
-            return;
-        }
-        
+        if (this.isLoading) return;
         this.isLoading = true;
-        console.log('loadStudents 시작, classId:', this.currentClassId);
-        
         try {
-            const response = await fetch(`/api/classes/${this.currentClassId}/students`, {
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                const students = await response.json();
-                console.log('서버에서 받은 학생 데이터:', students);
-                
-                // 렌더링 중이면 대기
-                if (this.isRendering) {
-                    console.log('렌더링 중이므로 대기...');
-                    setTimeout(() => this.renderStudents(students), 100);
-                } else {
-                this.renderStudents(students);
-                }
-            } else if (response.status === 401) {
-                // 로그인되지 않은 상태 - 로그인 페이지로 이동
-                document.getElementById('main-section').classList.add('hidden');
-                document.getElementById('login-section').classList.remove('hidden');
-            }
+            const user = firebase.auth().currentUser;
+            if (!user) throw new Error('로그인 필요');
+            const studentsSnap = await firebase.database().ref('users/' + user.uid + '/students').orderByChild('classId').equalTo(this.currentClassId).once('value');
+            const students = [];
+            studentsSnap.forEach(child => students.push({ id: child.key, ...child.val() }));
+            this.renderStudents(students);
         } catch (error) {
-            console.error('학생 목록 로드 에러:', error);
+            alert('학생 목록을 불러오는 중 오류가 발생했습니다.');
         } finally {
             this.isLoading = false;
+        }
+    }
+
+    async addStudent(name) {
+        try {
+            const user = firebase.auth().currentUser;
+            if (!user) throw new Error('로그인 필요');
+            const newStudentRef = firebase.database().ref('users/' + user.uid + '/students').push();
+            await newStudentRef.set({
+                name,
+                classId: this.currentClassId,
+                createdAt: Date.now()
+            });
+            this.loadStudents();
+        } catch (error) {
+            alert('학생 추가에 실패했습니다.');
+        }
+    }
+
+    async markAttendance(studentId, status) {
+        try {
+            const user = firebase.auth().currentUser;
+            if (!user) throw new Error('로그인 필요');
+            const today = new Date().toISOString().slice(0, 10);
+            const newAttendanceRef = firebase.database().ref('users/' + user.uid + '/attendances').push();
+            await newAttendanceRef.set({
+                studentId,
+                classId: this.currentClassId,
+                date: today,
+                status,
+                createdAt: Date.now()
+            });
+            if (typeof window.showNotification === 'function') {
+                window.showNotification('출석이 완료되었습니다.', 'success');
+            } else {
+                alert('출석이 완료되었습니다.');
+            }
+        } catch (error) {
+            alert('출석 기록에 실패했습니다.');
         }
     }
 
@@ -140,21 +158,19 @@ class AttendanceManager {
         // 이미 렌더링된 학생 ID 추적
         const renderedStudentIds = new Set();
         
-        // 오늘 날짜
-        const today = new Date().toISOString().split('T')[0];
-        
         // 오늘 출석 데이터 로드
         let todayAttendance = {};
         try {
-            const attendanceResponse = await fetch(`/api/attendance/${this.currentClassId}/${today}`, {
-                credentials: 'include'
+            const user = firebase.auth().currentUser;
+            if (!user) throw new Error('로그인 필요');
+            const today = new Date().toISOString().split('T')[0];
+            const attendanceSnap = await firebase.database().ref('users/' + user.uid + '/attendances').orderByChild('classId').equalTo(this.currentClassId).once('value');
+            attendanceSnap.forEach(child => {
+                const val = child.val();
+                if (val.date === today) {
+                    todayAttendance[val.studentId] = val.status;
+                }
             });
-            if (attendanceResponse.ok) {
-                const attendanceData = await attendanceResponse.json();
-                attendanceData.forEach(record => {
-                    todayAttendance[record.student_id] = record.status;
-                });
-            }
         } catch (error) {
             console.error('출석 데이터 로드 에러:', error);
         }
@@ -239,7 +255,7 @@ class AttendanceManager {
                 </div>
                 <div class="attendance-button">
                     <button class="attendance-btn ${existingStatus === 'present' ? 'present' : ''}" 
-                            onclick="window.attendanceManager.markAttendance(${student.id}, 'present')" 
+                            onclick="window.attendanceManager.markAttendance('${student.id}', 'present')" 
                             data-student-id="${student.id}">
                         ${buttonText}
                     </button>
@@ -253,52 +269,6 @@ class AttendanceManager {
         
         console.log('실제 렌더링된 학생 수:', renderedStudentIds.size);
         this.isRendering = false;
-    }
-
-    async markAttendance(studentId, status) {
-        try {
-            const response = await fetch('/api/attendance', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                    classId: this.currentClassId,
-                    studentId: studentId,
-                    status: status,
-                    date: new Date().toISOString().split('T')[0]
-                })
-            });
-
-            if (response.ok) {
-                // 출석 처리 후 해당 학생의 카드와 버튼 상태 업데이트
-                const studentCard = document.querySelector(`[data-student-id="${studentId}"]`);
-                const button = studentCard.querySelector('.attendance-btn');
-                
-                if (studentCard && button) {
-                    // 카드에 출석 완료 클래스 추가
-                    studentCard.classList.add('present');
-                    // 버튼 상태 업데이트
-                    button.classList.add('present');
-                    button.textContent = '출석완료';
-                }
-                
-                if (typeof window.showNotification === 'function') {
-                    window.showNotification('출석이 기록되었습니다.', 'success');
-                }
-            } else if (response.status === 401) {
-                // 로그인되지 않은 상태 - 로그인 페이지로 이동
-                document.getElementById('main-section').classList.add('hidden');
-                document.getElementById('login-section').classList.remove('hidden');
-            } else {
-                const error = await response.json();
-                alert(error.message || '출석 기록에 실패했습니다.');
-            }
-        } catch (error) {
-            console.error('출석 기록 에러:', error);
-            alert('출석 기록 중 오류가 발생했습니다.');
-        }
     }
 
     hideAttendanceSection() {

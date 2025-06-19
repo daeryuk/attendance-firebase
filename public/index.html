@@ -7,6 +7,21 @@
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+      var firebaseConfig = {
+        apiKey: "AIzaSyD0-N62tFBF9H_qsGQN9ILWwLNoH0ubEXI",
+        authDomain: "attendance-register-web.firebaseapp.com",
+        databaseURL: "https://attendance-register-web-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "attendance-register-web",
+        storageBucket: "attendance-register-web.appspot.com",
+        messagingSenderId: "687390240405",
+        appId: "1:687390240405:web:f10180d55593990f26f59c"
+      };
+      firebase.initializeApp(firebaseConfig);
+    </script>
 </head>
 <body>
     <div class="container">
@@ -14,8 +29,8 @@
             <h2>로그인</h2>
             <form id="login-form">
                 <div class="form-group">
-                    <label for="login-username">아이디</label>
-                    <input type="text" id="login-username" required>
+                    <label for="login-useremail">이메일</label>
+                    <input type="text" id="login-useremail" required>
                 </div>
                 <div class="form-group">
                     <label for="login-password">비밀번호</label>
@@ -30,8 +45,8 @@
             <h2>회원가입</h2>
             <form id="register-form">
                 <div class="form-group">
-                    <label for="register-username">아이디</label>
-                    <input type="text" id="register-username" required>
+                    <label for="register-useremail">이메일</label>
+                    <input type="text" id="register-useremail" required>
                 </div>
                 <div class="form-group">
                     <label for="register-password">비밀번호</label>

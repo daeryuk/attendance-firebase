@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    window.classManager = new ClassManager();
     // 네비게이션 이벤트 리스너 설정
     setupNavigation();
     
@@ -42,28 +43,6 @@ function hideAllSections() {
     document.getElementById('statistics-section').classList.add('hidden');
 }
 
-// API 요청을 위한 헬퍼 함수
-async function fetchWithAuth(url, options = {}) {
-    const defaultOptions = {
-        credentials: 'include', // 쿠키 포함
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    };
-
-    try {
-        const response = await fetch(url, { ...defaultOptions, ...options });
-        if (response.status === 401) {
-            window.location.href = '/';
-            return;
-        }
-        return response;
-    } catch (error) {
-        console.error('API 요청 에러:', error);
-        throw error;
-    }
-}
-
 // 날짜 포맷팅 헬퍼 함수
 function formatDate(date) {
     return date.toISOString().split('T')[0];
@@ -101,5 +80,4 @@ function showNotification(message, type = 'info') {
 
 // 전역 함수로 등록
 window.showModal = showModal;
-window.showNotification = showNotification;
-window.fetchWithAuth = fetchWithAuth; 
+window.showNotification = showNotification; 

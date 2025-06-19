@@ -1,3 +1,5 @@
+// import { getAuth, signInWithEmailAndPassword } from "firebase/auth"; // 제거
+
 class AuthManager {
     constructor() {
         this.loginForm = document.getElementById('login-form');
@@ -47,84 +49,32 @@ class AuthManager {
         this.loginSection.classList.remove('hidden');
     }
 
-    async handleLogin() {
-        const username = document.getElementById('login-username').value;
-        const password = document.getElementById('login-password').value;
-
+    async handleRegister() {
+        const useremail = document.getElementById('register-useremail').value;
+        const password = document.getElementById('register-password').value;
         try {
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include', // 쿠키 포함
-                body: JSON.stringify({ username, password })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                this.showMainSection();
-                // 다른 컴포넌트들 초기화
-                if (window.classManager) {
-                    window.classManager.loadClasses();
-                }
-            } else {
-                const error = await response.json();
-                alert(error.message || '로그인에 실패했습니다.');
-            }
+            await firebase.auth().createUserWithEmailAndPassword(useremail, password);
+            alert('회원가입이 완료되었습니다. 로그인해주세요.');
+            this.showLoginForm();
         } catch (error) {
-            console.error('로그인 에러:', error);
-            alert('로그인 중 오류가 발생했습니다.');
+            alert(error.message || '회원가입에 실패했습니다.');
         }
     }
 
-    async handleRegister() {
-        const username = document.getElementById('register-username').value;
-        const password = document.getElementById('register-password').value;
-        const name = document.getElementById('register-name').value;
-
+    async handleLogin() {
+        const useremail = document.getElementById('login-useremail').value;
+        const password = document.getElementById('login-password').value;
         try {
-            const response = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify({ username, password, name })
-            });
-
-            if (response.ok) {
-                alert('회원가입이 완료되었습니다. 로그인해주세요.');
-                this.showLoginForm();
-            } else {
-                const error = await response.json();
-                alert(error.message || '회원가입에 실패했습니다.');
-            }
+            await firebase.auth().signInWithEmailAndPassword(useremail, password);
+            this.showMainSection();
+            if (window.classManager) window.classManager.loadClasses();
         } catch (error) {
-            console.error('회원가입 에러:', error);
-            alert('회원가입 중 오류가 발생했습니다.');
+            alert(error.message || '로그인에 실패했습니다.');
         }
     }
 
     async checkSession() {
-        try {
-            const response = await fetch('/api/auth/check', {
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.authenticated) {
-                    // 로그인된 상태면 메인 페이지로 이동
-                    this.showMainSection();
-                }
-            } else if (response.status === 401) {
-                // 로그인되지 않은 상태 - 정상적인 상황이므로 에러 로그를 출력하지 않음
-                console.log('로그인되지 않은 상태입니다.');
-            }
-        } catch (error) {
-            console.error('세션 확인 에러:', error);
-        }
+        // checkSession 등 /api/auth/check 관련 함수는 완전히 삭제
     }
 
     showMainSection() {
@@ -135,21 +85,11 @@ class AuthManager {
 
     async handleLogout() {
         try {
-            const response = await fetch('/api/auth/logout', {
-                method: 'POST',
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                alert('로그아웃되었습니다.');
-                this.showLoginForm();
-                // 모든 섹션 숨기기
-                document.getElementById('main-section').classList.add('hidden');
-            }
-        } catch (error) {
-            console.error('로그아웃 에러:', error);
+            await firebase.auth().signOut();
             this.showLoginForm();
             document.getElementById('main-section').classList.add('hidden');
+        } catch (error) {
+            alert('로그아웃 중 오류가 발생했습니다.');
         }
     }
 }
@@ -157,4 +97,36 @@ class AuthManager {
 // 전역 객체로 선언
 document.addEventListener('DOMContentLoaded', () => {
     window.authManager = new AuthManager();
-}); 
+});
+
+// 회원가입
+async function signUp(email, password) {
+    try {
+        await firebase.auth().createUserWithEmailAndPassword(email, password);
+        alert('회원가입이 완료되었습니다.');
+        // 회원가입 후 자동 로그인
+        window.location.reload();
+    } catch (error) {
+        alert(error.message || '회원가입에 실패했습니다.');
+    }
+}
+
+// 로그인
+async function signIn(email, password) {
+    try {
+        await firebase.auth().signInWithEmailAndPassword(email, password);
+        window.location.reload();
+    } catch (error) {
+        alert(error.message || '로그인에 실패했습니다.');
+    }
+}
+
+// 로그아웃
+async function signOut() {
+    try {
+        await firebase.auth().signOut();
+        window.location.reload();
+    } catch (error) {
+        alert('로그아웃에 실패했습니다.');
+    }
+} 

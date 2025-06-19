@@ -117,23 +117,20 @@ class StatisticsManager {
 
     async loadStatistics() {
         if (!this.currentClassId) return;
-
         try {
-            const response = await fetch(`/api/classes/${this.currentClassId}/statistics`, {
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                const stats = await response.json();
-                this.renderStatistics(stats);
-                this.loadAttendanceDates();
-            } else if (response.status === 401) {
-                // 로그인되지 않은 상태 - 로그인 페이지로 이동
-                document.getElementById('main-section').classList.add('hidden');
-                document.getElementById('login-section').classList.remove('hidden');
-            }
+            // 학생 수
+            const studentsSnap = await firebase.database().ref('students').orderByChild('classId').equalTo(this.currentClassId).once('value');
+            let studentCount = 0;
+            studentsSnap.forEach(() => studentCount++);
+            // 출석 수
+            const attendanceSnap = await firebase.database().ref('attendances').orderByChild('classId').equalTo(this.currentClassId).once('value');
+            let attendanceCount = 0;
+            attendanceSnap.forEach(() => attendanceCount++);
+            // 간단 통계 렌더링
+            this.renderStatistics({ studentCount, attendanceCount });
+            this.loadAttendanceDates();
         } catch (error) {
-            console.error('통계 로드 에러:', error);
+            alert('통계 로드에 실패했습니다.');
         }
     }
 
@@ -143,17 +140,17 @@ class StatisticsManager {
             const month = this.currentDate.getMonth() + 1;
             const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
             const endDate = `${year}-${month.toString().padStart(2, '0')}-31`;
-            
-            const response = await fetch(`/api/classes/${this.currentClassId}/attendance/range?start=${startDate}&end=${endDate}`, {
-                credentials: 'include'
+            const attendanceSnap = await firebase.database().ref('attendances').orderByChild('classId').equalTo(this.currentClassId).once('value');
+            const attendanceData = [];
+            attendanceSnap.forEach(child => {
+                const val = child.val();
+                if (val.date >= startDate && val.date <= endDate) {
+                    attendanceData.push(val);
+                }
             });
-
-            if (response.ok) {
-                const attendanceData = await response.json();
-                this.markAttendanceDates(attendanceData);
-            }
+            this.markAttendanceDates(attendanceData);
         } catch (error) {
-            console.error('출석 날짜 로드 에러:', error);
+            alert('출석 날짜 로드에 실패했습니다.');
         }
     }
 
@@ -197,20 +194,17 @@ class StatisticsManager {
 
     async showAttendanceForDate(date) {
         try {
-            const response = await fetch(`/api/classes/${this.currentClassId}/attendance/${date}`, {
-                credentials: 'include'
+            const attendanceSnap = await firebase.database().ref('attendances').orderByChild('classId').equalTo(this.currentClassId).once('value');
+            const attendances = [];
+            attendanceSnap.forEach(child => {
+                const val = child.val();
+                if (val.date === date) {
+                    attendances.push(val);
+                }
             });
-
-            if (response.ok) {
-                const attendance = await response.json();
-                this.showAttendanceModal(attendance, date);
-            } else if (response.status === 401) {
-                // 로그인되지 않은 상태 - 로그인 페이지로 이동
-                document.getElementById('main-section').classList.add('hidden');
-                document.getElementById('login-section').classList.remove('hidden');
-            }
+            this.showAttendanceModal(attendances, date);
         } catch (error) {
-            console.error('출석 정보 로드 에러:', error);
+            alert('출석 정보 로드에 실패했습니다.');
         }
     }
 
