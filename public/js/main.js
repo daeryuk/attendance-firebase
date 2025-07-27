@@ -101,6 +101,7 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+// 전체 통계 돌아가기 버튼 이벤트 리스너
 document.getElementById("back-to-main-btn").addEventListener("click", function () {
     // 전체 통계 섹션 숨기기
     document.getElementById("full-statistics-section").classList.add("hidden");
