@@ -12,6 +12,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    const fullStatisticsBtn = document.getElementById('full-statistics-btn');
+    const fullStatisticsSection = document.getElementById('full-statistics-section');
+    const mainSection = document.getElementById('main-section');
+    const statisticsSection = document.getElementById('statistics-section');
+    const attendanceSection = document.getElementById('attendance-section');
+    const classDetail = document.getElementById('class-detail');
+    const classManagement = document.querySelector('.class-management');
+
+    function hideAllMainSections() {
+        if (statisticsSection) statisticsSection.classList.add('hidden');
+        if (attendanceSection) attendanceSection.classList.add('hidden');
+        if (classDetail) classDetail.classList.add('hidden');
+        if (fullStatisticsSection) fullStatisticsSection.classList.add('hidden');
+        if (classManagement) classManagement.classList.add('hidden');
+    }
+
+    if (fullStatisticsBtn) {
+        fullStatisticsBtn.addEventListener('click', () => {
+            hideAllMainSections();
+            fullStatisticsSection.classList.remove('hidden');
+        });
+    }
 });
 
 function setupNavigation() {

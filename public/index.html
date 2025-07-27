@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>출석 관리 시스템</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/full-statistics.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -64,7 +65,10 @@
         <div id="main-section" class="section hidden">
             <div class="header">
                 <h2>출석 관리 시스템</h2>
-                <button id="logout-btn"><span class="material-icons">logout</span>로그아웃</button>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <button id="full-statistics-btn"><span class="material-icons">insights</span>전체 통계</button>
+                    <button id="logout-btn"><span class="material-icons">logout</span>로그아웃</button>
+                </div>
             </div>
             
             <div class="class-management">
@@ -106,12 +110,23 @@
                 <div id="attendance-stats"></div>
                 <div id="long-term-absence"></div>
             </div>
+
+            <div id="full-statistics-section" class="hidden section">
+                <h3>전체 통계</h3>
+                <div class="full-statistics-date-picker">
+                    <span class="material-icons calendar-icon">calendar_month</span>
+                    <label for="full-statistics-date" class="date-label">날짜 선택</label>
+                    <input type="date" id="full-statistics-date" class="date-input">
+                </div>
+                <div id="full-statistics-result"></div>
+            </div>
         </div>
     </div>
 
     <script src="js/auth.js"></script>
     <script src="js/class.js"></script>
     <script src="js/attendance.js"></script>
+    <script src="js/full-statistics.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html> 

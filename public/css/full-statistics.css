@@ -1,0 +1,156 @@
+/* 전체 통계 페이지 스타일 */
+
+#full-statistics-section {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 16px rgba(80, 80, 160, 0.10);
+    padding: 32px 24px 32px 24px;
+    margin-top: 24px;
+    margin-bottom: 24px;
+    min-height: 400px;
+}
+
+#full-statistics-section h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #6a82fb;
+    margin-bottom: 18px;
+}
+
+.full-statistics-class {
+    margin-bottom: 36px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 18px 16px 12px 16px;
+    background: #f8f9fa;
+    box-shadow: 0 2px 8px rgba(80, 80, 160, 0.06);
+}
+
+.full-statistics-class h4 {
+    margin-bottom: 12px;
+    color: #fc5c7d;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.full-statistics-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 4px rgba(80, 80, 160, 0.04);
+}
+
+.full-statistics-table th, .full-statistics-table td {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 1rem;
+}
+
+.full-statistics-table th {
+    background: #f0f4ff;
+    color: #6a82fb;
+    font-weight: 700;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.full-statistics-table tr:nth-child(even) {
+    background: #f8f9fa;
+}
+
+.full-statistics-table td.present {
+    color: #2ecc40;
+    font-weight: 700;
+}
+.full-statistics-table td.absent {
+    color: #ff4757;
+    font-weight: 700;
+}
+.full-statistics-table td.late {
+    color: #ffa502;
+    font-weight: 700;
+}
+
+.full-statistics-table tr:hover {
+    background: #eaf0ff;
+}
+
+.loading, .no-data, .error {
+    text-align: center;
+    color: #888;
+    font-size: 1.1rem;
+    margin: 32px 0;
+}
+
+#full-statistics-date {
+    font-size: 1rem;
+    border: 1.5px solid #6a82fb;
+    border-radius: 6px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border 0.2s;
+}
+#full-statistics-date:focus {
+    border: 1.5px solid #fc5c7d;
+}
+
+.full-statistics-date-picker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(90deg, #f0f4ff 60%, #f8e1ec 100%);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(106,130,251,0.08);
+    padding: 12px 20px;
+    margin-bottom: 22px;
+    transition: box-shadow 0.2s;
+}
+
+.full-statistics-date-picker:hover {
+    box-shadow: 0 4px 16px rgba(106,130,251,0.15);
+}
+
+.full-statistics-date-picker .calendar-icon {
+    font-size: 1.7rem;
+    color: #6a82fb;
+    margin-right: 2px;
+}
+
+.full-statistics-date-picker .date-label {
+    font-weight: 700;
+    color: #6a82fb;
+    font-size: 1.08rem;
+    margin-right: 8px;
+    white-space: nowrap;
+}
+
+.full-statistics-date-picker .date-input {
+    font-size: 1rem;
+    border: 1.5px solid #6a82fb;
+    border-radius: 6px;
+    padding: 8px 12px;
+    outline: none;
+    background: #fff;
+    transition: border 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 4px rgba(80, 80, 160, 0.04);
+}
+
+.full-statistics-date-picker .date-input:focus {
+    border: 1.5px solid #fc5c7d;
+    box-shadow: 0 2px 8px rgba(252,92,125,0.10);
+}
+
+@media (max-width: 700px) {
+    #full-statistics-section {
+        padding: 16px 4px;
+    }
+    .full-statistics-table th, .full-statistics-table td {
+        padding: 7px 6px;
+        font-size: 0.95rem;
+    }
+    .full-statistics-class {
+        padding: 10px 4px 8px 4px;
+    }
+} 
