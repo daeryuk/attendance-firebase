@@ -6,6 +6,9 @@ class AttendanceManager {
         this.isLoading = false;
         this.isRendering = false;
         this.lastCallTime = 0;
+        // 디버깅용 DOM 체크
+        console.log('attendanceSection:', this.attendanceSection);
+        console.log('attendanceList:', this.attendanceList);
     }
 
     showAttendanceSection(classId) {
@@ -20,18 +23,17 @@ class AttendanceManager {
         console.log('showAttendanceSection 호출됨, classId:', classId, '현재 classId:', this.currentClassId);
         this.lastCallTime = now;
         
+        // 무조건 가장 먼저 할당!
+        this.currentClassId = classId;
+        
         // 이미 같은 반의 출석 섹션이 열려있다면 아무것도 하지 않음
         if (this.currentClassId === classId && !this.attendanceSection.classList.contains('hidden')) {
             console.log('이미 같은 반의 출석 섹션이 열려있음');
             return;
         }
         
-        // 다른 반을 클릭했을 때 기존 출석 영역 초기화
-        if (this.currentClassId !== classId) {
-            this.clearAttendanceSection();
-        }
-        
-        this.currentClassId = classId;
+        // 기존 출석 영역 초기화
+        this.clearAttendanceSection();
         this.attendanceSection.classList.remove('hidden');
         this.loadStudents();
     }
@@ -39,7 +41,6 @@ class AttendanceManager {
     clearAttendanceSection() {
         console.log('clearAttendanceSection 호출됨');
         this.attendanceList.innerHTML = '';
-        this.currentClassId = null;
         this.isLoading = false;
         this.isRendering = false;
         this.lastCallTime = 0;
@@ -74,9 +75,13 @@ class AttendanceManager {
         try {
             const user = firebase.auth().currentUser;
             if (!user) throw new Error('로그인 필요');
+            console.log('loadStudents 쿼리 classId:', this.currentClassId);
             const studentsSnap = await firebase.database().ref('users/' + user.uid + '/students').orderByChild('classId').equalTo(this.currentClassId).once('value');
             const students = [];
-            studentsSnap.forEach(child => students.push({ id: child.key, ...child.val() }));
+            studentsSnap.forEach(child => {
+                console.log('loadStudents 학생:', child.key, child.val());
+                students.push({ id: child.key, ...child.val() });
+            });
             this.renderStudents(students);
         } catch (error) {
             alert('학생 목록을 불러오는 중 오류가 발생했습니다.');
@@ -106,6 +111,23 @@ class AttendanceManager {
             const user = firebase.auth().currentUser;
             if (!user) throw new Error('로그인 필요');
             const today = new Date().toISOString().slice(0, 10);
+            // 중복 출석 체크
+            const attendanceSnap = await firebase.database().ref('users/' + user.uid + '/attendances').orderByChild('classId').equalTo(this.currentClassId).once('value');
+            let alreadyPresent = false;
+            attendanceSnap.forEach(child => {
+                const val = child.val();
+                if (val.studentId === studentId && val.date === today && val.status === 'present') {
+                    alreadyPresent = true;
+                }
+            });
+            if (alreadyPresent) {
+                if (typeof window.showNotification === 'function') {
+                    window.showNotification('이미 출석이 완료된 학생입니다.', 'warning');
+                } else {
+                    alert('이미 출석이 완료된 학생입니다.');
+                }
+                return;
+            }
             const newAttendanceRef = firebase.database().ref('users/' + user.uid + '/attendances').push();
             await newAttendanceRef.set({
                 studentId,
@@ -119,6 +141,8 @@ class AttendanceManager {
             } else {
                 alert('출석이 완료되었습니다.');
             }
+            // 출석 후 목록 갱신
+            this.loadStudents();
         } catch (error) {
             alert('출석 기록에 실패했습니다.');
         }
@@ -175,6 +199,9 @@ class AttendanceManager {
             console.error('출석 데이터 로드 에러:', error);
         }
         
+        // 출석 완료/미출석 숫자 계산
+        const presentCount = finalStudents.filter(s => todayAttendance[s.id] === 'present').length;
+        const absentCount = finalStudents.length - presentCount;
         // 출석 관리 헤더 추가
         const headerHTML = `
             <div class="attendance-header">
@@ -193,11 +220,11 @@ class AttendanceManager {
                         <span class="stat-label">전체 학생</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-value">${Object.keys(todayAttendance).length}</span>
+                        <span class="stat-value">${presentCount}</span>
                         <span class="stat-label">출석 완료</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-value">${finalStudents.length - Object.keys(todayAttendance).length}</span>
+                        <span class="stat-value">${absentCount}</span>
                         <span class="stat-label">미출석</span>
                     </div>
                 </div>
@@ -230,12 +257,14 @@ class AttendanceManager {
             let buttonText = '출석체크';
             let statusIcon = '⏰';
             let statusClass = '';
+            let buttonDisabled = '';
             
             if (existingStatus === 'present') {
                 cardClass += ' present';
                 buttonText = '출석완료';
                 statusIcon = '✅';
                 statusClass = 'present';
+                buttonDisabled = 'disabled';
             }
             
             studentCard.className = cardClass;
@@ -256,7 +285,7 @@ class AttendanceManager {
                 <div class="attendance-button">
                     <button class="attendance-btn ${existingStatus === 'present' ? 'present' : ''}" 
                             onclick="window.attendanceManager.markAttendance('${student.id}', 'present')" 
-                            data-student-id="${student.id}">
+                            data-student-id="${student.id}" ${buttonDisabled}>
                         ${buttonText}
                     </button>
                 </div>
@@ -275,9 +304,31 @@ class AttendanceManager {
         this.attendanceSection.classList.add('hidden');
         this.currentClassId = null;
     }
+
+    async fixStudentClassIds() {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+        const studentsRef = firebase.database().ref('users/' + user.uid + '/students');
+        const studentsSnap = await studentsRef.once('value');
+        let fixedCount = 0;
+        studentsSnap.forEach(child => {
+            const val = child.val();
+            if (typeof val.classId !== 'string' || !val.classId) {
+                studentsRef.child(child.key).update({ classId: String(val.classId) });
+                console.log('[fixStudentClassIds] 고침:', child.key, val);
+                fixedCount++;
+            }
+        });
+        if (fixedCount > 0) {
+            console.log(`[fixStudentClassIds] 총 ${fixedCount}건의 classId를 문자열로 보정함.`);
+        } else {
+            console.log('[fixStudentClassIds] 모든 classId가 정상입니다.');
+        }
+    }
 }
 
 // 전역 객체로 선언
 document.addEventListener('DOMContentLoaded', () => {
     window.attendanceManager = new AttendanceManager();
+    window.attendanceManager.fixStudentClassIds();
 }); 

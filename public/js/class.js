@@ -13,6 +13,7 @@ class ClassManager {
         this.currentClassId = null;
         this.init();
     }
+    
 
     init() {
         this.addClassBtn.addEventListener('click', () => this.showAddClassForm());
@@ -48,7 +49,9 @@ class ClassManager {
             const teachers = [];
             teachersSnap.forEach(child => teachers.push(child.val().name));
             const students = [];
-            studentsSnap.forEach(child => students.push(child.val().name));
+            studentsSnap.forEach(child => {
+                students.push({ id: child.key, ...child.val() });
+            });
             const classCard = document.createElement('div');
             classCard.className = 'class-card';
             classCard.dataset.classId = String(classItem.id);
@@ -303,7 +306,9 @@ class ClassManager {
             teachersSnap.forEach(child => teachers.push({ id: child.key, ...child.val() }));
             const studentsSnap = await firebase.database().ref('users/' + user.uid + '/students').orderByChild('classId').equalTo(classId).once('value');
             const students = [];
-            studentsSnap.forEach(child => students.push({ id: child.key, ...child.val() }));
+            studentsSnap.forEach(child => {
+                students.push({ id: child.key, ...child.val() });
+            });
             classData.teachers = teachers;
             classData.students = students;
             this.currentClassId = classId;
@@ -502,10 +507,10 @@ class ClassManager {
                 </div>
             `);
             setTimeout(() => {
-                document.getElementById('modal-add-student-btn').onclick = () => {
+                document.getElementById('modal-add-student-btn').onclick = async () => {
                     const name = document.getElementById('modal-student-name').value.trim();
                     if (name) {
-                        this.addStudent(name);
+                        await this.addStudent(name);
                         document.querySelector('.modal').remove();
                     } else {
                         if (typeof window.showNotification === 'function') {
@@ -532,10 +537,14 @@ class ClassManager {
             const newStudentRef = firebase.database().ref('users/' + user.uid + '/students').push();
             await newStudentRef.set({
                 name,
-                classId: this.currentClassId,
+                classId: String(this.currentClassId), // 항상 문자열로 저장
                 createdAt: Date.now()
             });
-            this.showDetailPage(this.currentClassId);
+            await this.showDetailPage(this.currentClassId);
+            // 학생 추가 후 출석체크 화면도 즉시 갱신
+            if (window.attendanceManager && window.attendanceManager.currentClassId === this.currentClassId) {
+                window.attendanceManager.loadStudents();
+            }
         } catch (error) {
             console.error('학생 추가 에러:', error);
             alert('학생 추가 중 오류가 발생했습니다.');
@@ -593,11 +602,19 @@ class ClassManager {
         try {
             const user = firebase.auth().currentUser;
             if (!user) throw new Error('로그인 필요');
+            // 학생 삭제
             await firebase.database().ref('users/' + user.uid + '/students/' + studentId).remove();
+            // 출석정보 삭제
+            const attendancesSnap = await firebase.database().ref('users/' + user.uid + '/attendances').orderByChild('studentId').equalTo(studentId).once('value');
+            let deletedCount = 0;
+            attendancesSnap.forEach(child => {
+                child.ref.remove();
+                deletedCount++;
+            });
             if (typeof window.showNotification === 'function') {
-                window.showNotification('학생이 성공적으로 삭제되었습니다.', 'success');
+                window.showNotification('학생이 성공적으로 삭제되었습니다.' + (deletedCount > 0 ? ` (출석기록 ${deletedCount}건도 삭제됨)` : ''), 'success');
             } else {
-                alert('학생이 성공적으로 삭제되었습니다.');
+                alert('학생이 성공적으로 삭제되었습니다.' + (deletedCount > 0 ? ` (출석기록 ${deletedCount}건도 삭제됨)` : ''));
             }
             this.showDetailPage(this.currentClassId);
         } catch (error) {
