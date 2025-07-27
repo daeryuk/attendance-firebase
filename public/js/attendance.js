@@ -26,10 +26,13 @@ class AttendanceManager {
         // 무조건 가장 먼저 할당!
         this.currentClassId = classId;
         
-        // 이미 같은 반의 출석 섹션이 열려있다면 아무것도 하지 않음
+        // 이미 같은 반의 출석 섹션이 열려있고, classId도 같으면 아무것도 하지 않음
         if (this.currentClassId === classId && !this.attendanceSection.classList.contains('hidden')) {
-            console.log('이미 같은 반의 출석 섹션이 열려있음');
-            return;
+            // classId가 다르면 항상 갱신
+            if (this.currentClassId === classId) {
+                console.log('이미 같은 반의 출석 섹션이 열려있음');
+                return;
+            }
         }
         
         // 기존 출석 영역 초기화

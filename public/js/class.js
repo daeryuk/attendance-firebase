@@ -65,7 +65,6 @@ class ClassManager {
                 <div class="class-actions">
                     <button onclick="window.classManager.showClassDetailPage('${classItem.id}')">상세보기</button>
                     <button class="attendance-btn" data-class-id="${classItem.id}">출석체크</button>
-                    <button class="statistics-btn" onclick="window.statisticsManager.showStatisticsSection('${classItem.id}')">통계</button>
                 </div>
             `;
             const attendanceBtn = classCard.querySelector('.attendance-btn');
