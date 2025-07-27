@@ -23,20 +23,19 @@ class AttendanceManager {
         console.log('showAttendanceSection 호출됨, classId:', classId, '현재 classId:', this.currentClassId);
         this.lastCallTime = now;
         
-        // 무조건 가장 먼저 할당!
-        this.currentClassId = classId;
-        
         // 이미 같은 반의 출석 섹션이 열려있고, classId도 같으면 아무것도 하지 않음
-        if (this.currentClassId === classId && !this.attendanceSection.classList.contains('hidden')) {
-            // classId가 다르면 항상 갱신
-            if (this.currentClassId === classId) {
-                console.log('이미 같은 반의 출석 섹션이 열려있음');
-                return;
-            }
+        if (!this.attendanceSection.classList.contains('hidden') && this.currentClassId === classId) {
+            console.log('이미 같은 반의 출석 섹션이 열려있음');
+            return;
         }
-        
-        // 기존 출석 영역 초기화
-        this.clearAttendanceSection();
+
+        // 다른 반의 출석 섹션이 열려있으면 기존 섹션 clear
+        if (!this.attendanceSection.classList.contains('hidden') && this.currentClassId !== classId) {
+            this.clearAttendanceSection();
+        }
+
+        // 새로운 반의 classId 할당
+        this.currentClassId = classId;
         this.attendanceSection.classList.remove('hidden');
         this.loadStudents();
     }

@@ -392,7 +392,7 @@ class ClassManager {
                 document.getElementById('modal-delete-class-btn').onclick = () => {
                     const password = document.getElementById('modal-password').value;
                     if (password) {
-                        this.deleteClass(classId);
+                        this.deleteClass(classId, password); // 비밀번호 전달
                         document.querySelector('.modal').remove();
                     } else {
                         if (typeof window.showNotification === 'function') {
@@ -403,7 +403,6 @@ class ClassManager {
                     }
                 };
                 document.getElementById('modal-password').focus();
-                
                 // Enter 키 이벤트 추가
                 document.getElementById('modal-password').addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
@@ -414,15 +413,18 @@ class ClassManager {
         } else {
             const password = prompt('학급을 삭제하려면 비밀번호를 입력하세요:');
             if (password) {
-                this.deleteClass(classId);
+                this.deleteClass(classId, password); // 비밀번호 전달
             }
         }
     }
 
-    async deleteClass(classId) {
+    async deleteClass(classId, password) {
         try {
             const user = firebase.auth().currentUser;
             if (!user) throw new Error('로그인 필요');
+            // re-authenticate
+            const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+            await user.reauthenticateWithCredential(credential);
             await firebase.database().ref('users/' + user.uid + '/classes/' + classId).remove();
             const [teachersSnap, studentsSnap, attendancesSnap] = await Promise.all([
                 firebase.database().ref('users/' + user.uid + '/teachers').orderByChild('classId').equalTo(classId).once('value'),
@@ -434,7 +436,11 @@ class ClassManager {
             attendancesSnap.forEach(child => child.ref.remove());
             await this.loadClasses();
         } catch (error) {
-            alert('학급 삭제에 실패했습니다.');
+            if (error.code === 'auth/wrong-password') {
+                alert('비밀번호가 일치하지 않습니다.');
+            } else {
+                alert('학급 삭제에 실패했습니다.');
+            }
         }
     }
 
@@ -681,7 +687,7 @@ class ClassManager {
                 document.getElementById('modal-delete-teacher-btn').onclick = () => {
                     const password = document.getElementById('modal-password').value;
                     if (password) {
-                        this.deleteTeacher(teacherId);
+                        this.deleteTeacher(teacherId, password); // 비밀번호 전달
                         document.querySelector('.modal').remove();
                     } else {
                         if (typeof window.showNotification === 'function') {
@@ -692,7 +698,6 @@ class ClassManager {
                     }
                 };
                 document.getElementById('modal-password').focus();
-                
                 // Enter 키 이벤트 추가
                 document.getElementById('modal-password').addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
@@ -703,7 +708,34 @@ class ClassManager {
         } else {
             const password = prompt('선생님을 삭제하려면 비밀번호를 입력하세요:');
             if (password) {
-                this.deleteTeacher(teacherId);
+                this.deleteTeacher(teacherId, password); // 비밀번호 전달
+            }
+        }
+    }
+
+    async deleteTeacher(teacherId, password) {
+        try {
+            const user = firebase.auth().currentUser;
+            if (!user) throw new Error('로그인 필요');
+            // re-authenticate
+            const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+            await user.reauthenticateWithCredential(credential);
+            await firebase.database().ref('users/' + user.uid + '/teachers/' + teacherId).remove();
+            if (typeof window.showNotification === 'function') {
+                window.showNotification('선생님이 성공적으로 삭제되었습니다.', 'success');
+            } else {
+                alert('선생님이 성공적으로 삭제되었습니다.');
+            }
+            this.showDetailPage(this.currentClassId);
+        } catch (error) {
+            if (error.code === 'auth/wrong-password') {
+                alert('비밀번호가 일치하지 않습니다.');
+            } else {
+                if (typeof window.showNotification === 'function') {
+                    window.showNotification('선생님 삭제 중 오류가 발생했습니다.', 'error');
+                } else {
+                    alert('선생님 삭제 중 오류가 발생했습니다.');
+                }
             }
         }
     }
@@ -729,7 +761,7 @@ class ClassManager {
                 document.getElementById('modal-delete-student-btn').onclick = () => {
                     const password = document.getElementById('modal-password').value;
                     if (password) {
-                        this.deleteStudent(studentId);
+                        this.deleteStudent(studentId, password); // 비밀번호 전달
                         document.querySelector('.modal').remove();
                     } else {
                         if (typeof window.showNotification === 'function') {
@@ -740,7 +772,6 @@ class ClassManager {
                     }
                 };
                 document.getElementById('modal-password').focus();
-                
                 // Enter 키 이벤트 추가
                 document.getElementById('modal-password').addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
@@ -751,9 +782,78 @@ class ClassManager {
         } else {
             const password = prompt('학생을 삭제하려면 비밀번호를 입력하세요:');
             if (password) {
-                this.deleteStudent(studentId);
+                this.deleteStudent(studentId, password); // 비밀번호 전달
             }
         }
+    }
+
+    async deleteStudent(studentId, password) {
+        try {
+            const user = firebase.auth().currentUser;
+            if (!user) throw new Error('로그인 필요');
+            // re-authenticate
+            const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+            await user.reauthenticateWithCredential(credential);
+            // 학생 삭제
+            await firebase.database().ref('users/' + user.uid + '/students/' + studentId).remove();
+            // 출석정보 삭제
+            const attendancesSnap = await firebase.database().ref('users/' + user.uid + '/attendances').orderByChild('studentId').equalTo(studentId).once('value');
+            let deletedCount = 0;
+            attendancesSnap.forEach(child => {
+                child.ref.remove();
+                deletedCount++;
+            });
+            if (typeof window.showNotification === 'function') {
+                window.showNotification('학생이 성공적으로 삭제되었습니다.' + (deletedCount > 0 ? ` (출석기록 ${deletedCount}건도 삭제됨)` : ''), 'success');
+            } else {
+                alert('학생이 성공적으로 삭제되었습니다.' + (deletedCount > 0 ? ` (출석기록 ${deletedCount}건도 삭제됨)` : ''));
+            }
+            this.showDetailPage(this.currentClassId);
+        } catch (error) {
+            if (error.code === 'auth/wrong-password') {
+                alert('비밀번호가 일치하지 않습니다.');
+            } else {
+                if (typeof window.showNotification === 'function') {
+                    window.showNotification('학생 삭제 중 오류가 발생했습니다.', 'error');
+                } else {
+                    alert('학생 삭제 중 오류가 발생했습니다.');
+                }
+            }
+        }
+    }
+
+    showClassDetails(classId) {
+        // 모든 섹션 숨기기
+        this.hideAllSections();
+        
+        // 선택된 반 버튼 활성화
+        document.querySelectorAll('.class-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        // 반 상세 정보 표시
+        this.classDetailsSection.classList.remove('hidden');
+        this.loadClassDetails(classId);
+    }
+
+    hideAllSections() {
+        // 모든 섹션 숨기기
+        this.classDetail.classList.add('hidden');
+        
+        // 출석, 통계, 전체 통계 섹션도 숨기기
+        if (window.attendanceManager) {
+            window.attendanceManager.attendanceSection.classList.add('hidden');
+        }
+        if (window.statisticsManager) {
+            window.statisticsManager.statisticsSection.classList.add('hidden');
+        }
+        if (window.overallStatisticsManager) {
+            window.overallStatisticsManager.overallStatisticsSection.classList.add('hidden');
+        }
+        
+        // 상세보기 페이지 숨기기
+        this.hideDetailPage();
     }
 }
 
