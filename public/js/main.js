@@ -101,6 +101,16 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+document.getElementById("back-to-main-btn").addEventListener("click", function () {
+    // 전체 통계 섹션 숨기기
+    document.getElementById("full-statistics-section").classList.add("hidden");
+
+    // 메인 섹션 보이기
+    document.querySelector(".class-management").classList.remove("hidden");
+
+});
+
+
 // 전역 함수로 등록
 window.showModal = showModal;
 window.showNotification = showNotification; 
