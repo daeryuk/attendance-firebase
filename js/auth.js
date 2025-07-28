@@ -52,6 +52,12 @@ class AuthManager {
     async handleRegister() {
         const useremail = document.getElementById('register-useremail').value;
         const password = document.getElementById('register-password').value;
+        const passwordConfirm = document.getElementById('register-password-confirm').value;
+
+        if (password !== passwordConfirm) {
+            alert('비밀번호가 일치하지 않습니다.');
+            return;
+        }
         try {
             await firebase.auth().createUserWithEmailAndPassword(useremail, password);
             alert('회원가입이 완료되었습니다. 로그인해주세요.');

@@ -83,7 +83,6 @@ function showModal(content) {
     modal.innerHTML = `
         <div class="modal-content">
             ${content}
-            <button onclick="this.parentElement.parentElement.remove()">닫기</button>
         </div>
     `;
     document.body.appendChild(modal);

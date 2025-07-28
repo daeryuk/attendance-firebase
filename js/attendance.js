@@ -112,7 +112,8 @@ class AttendanceManager {
         try {
             const user = firebase.auth().currentUser;
             if (!user) throw new Error('로그인 필요');
-            const today = new Date().toISOString().slice(0, 10);
+            // 한국 시간 출석 날짜 구하기
+            const today = getKoreanTodayDate();
             // 중복 출석 체크
             const attendanceSnap = await firebase.database().ref('users/' + user.uid + '/attendances').orderByChild('classId').equalTo(this.currentClassId).once('value');
             let alreadyPresent = false;
@@ -130,6 +131,7 @@ class AttendanceManager {
                 }
                 return;
             }
+            // 출석 기록 추가
             const newAttendanceRef = firebase.database().ref('users/' + user.uid + '/attendances').push();
             await newAttendanceRef.set({
                 studentId,
@@ -189,7 +191,8 @@ class AttendanceManager {
         try {
             const user = firebase.auth().currentUser;
             if (!user) throw new Error('로그인 필요');
-            const today = new Date().toISOString().split('T')[0];
+            // 한국 시간 출석 날짜 구하기
+            const today = getKoreanTodayDate();
             const attendanceSnap = await firebase.database().ref('users/' + user.uid + '/attendances').orderByChild('classId').equalTo(this.currentClassId).once('value');
             attendanceSnap.forEach(child => {
                 const val = child.val();
@@ -328,7 +331,12 @@ class AttendanceManager {
         }
     }
 }
-
+// 한국 시간 출석 날짜 구하기
+function getKoreanTodayDate() {
+    const now = new Date();
+    now.setHours(now.getHours() + 9);
+    return now.toISOString().slice(0, 10);
+}
 // 전역 객체로 선언
 document.addEventListener('DOMContentLoaded', () => {
     window.attendanceManager = new AttendanceManager();

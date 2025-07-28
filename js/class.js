@@ -83,40 +83,54 @@ class ClassManager {
         if (existingModal) existingModal.remove();
         if (typeof window.showModal === 'function') {
             window.showModal(`
-                <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
-                  <div style="width:60px;height:60px;background:linear-gradient(135deg,#6a82fb 60%,#fc5c7d 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 4px 16px rgba(106,130,251,0.15);">
-                    <span style="font-size:2.2rem;color:white;">🏫</span>
-                  </div>
-                  <h3 style="margin-bottom:0;font-size:1.5rem;font-weight:700;letter-spacing:-1px;color:#6a82fb;">새 학급 만들기</h3>
-                  <div style="width:100%;height:1px;background:linear-gradient(90deg,#6a82fb33,#fc5c7d33);margin:16px 0 18px 0;"></div>
+                <!-- 상단 아이콘 및 제목 -->
+                <div class="modal-header">
+                <div class="modal-icon">
+                    <span class="modal-icon-emoji">🏫</span>
                 </div>
-                <div class="form-group">
-                    <label class="modal-label">학급 이름</label>
-                    <input type="text" class="modal-class-name modal-input" placeholder="학급 이름을 입력하세요">
+                <h3>새 학급 만들기</h3>
                 </div>
+
+                <!-- 구분선 -->
+                <div class="modal-divider"></div>
+
+                <!-- 학급 이름 -->
                 <div class="form-group">
-                    <label class="modal-label">담임 선생님</label>
-                    <div id="modal-teachers-container">
-                        <div class="teacher-input-row">
-                            <input type="text" class="teacher-input modal-input" placeholder="선생님 이름">
-                            <button type="button" class="remove-teacher-btn modal-remove-btn">삭제</button>
-                        </div>
+                <label class="modal-label">학급 이름</label>
+                <input type="text" class="modal-class-name modal-input" placeholder="학급 이름을 입력하세요">
+                </div>
+
+                <!-- 담임 선생님 -->
+                <div class="form-group">
+                <label class="modal-label">담임 선생님</label>
+                <div id="modal-teachers-container">
+                    <div class="teacher-input-row">
+                    <input type="text" class="teacher-input modal-input" placeholder="선생님 이름">
+                    <button type="button" class="remove-teacher-btn modal-remove-btn">삭제</button>
                     </div>
-                    <button type="button" id="add-teacher-input-btn" class="modal-add-btn">+ 선생님 추가</button>
                 </div>
+                <button type="button" id="add-teacher-input-btn" class="modal-add-btn">+ 선생님 추가</button>
+                </div>
+
+                <!-- 학생 목록 -->
                 <div class="form-group">
-                    <label class="modal-label">학생 목록</label>
-                    <div id="modal-students-container">
-                        <div class="student-input-row">
-                            <input type="text" class="student-input modal-input" placeholder="학생 이름">
-                            <button type="button" class="remove-student-btn modal-remove-btn">삭제</button>
-                        </div>
+                <label class="modal-label">학생 목록</label>
+                <div id="modal-students-container">
+                    <div class="student-input-row">
+                    <input type="text" class="student-input modal-input" placeholder="학생 이름">
+                    <button type="button" class="remove-student-btn modal-remove-btn">삭제</button>
                     </div>
-                    <button type="button" id="add-student-input-btn" class="modal-add-btn">+ 학생 추가</button>
                 </div>
-                <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;align-items:center;">
-                    <button id="modal-create-class-btn" class="modal-create-btn">학급 생성</button>
+                <button type="button" id="add-student-input-btn" class="modal-add-btn">+ 학생 추가</button>
                 </div>
+
+                <!-- 버튼 영역 -->
+                <div class="modal-footer">
+                <button class="modal-cancel-btn" onclick="this.closest('.modal').remove()">닫기</button>
+                <button id="modal-create-class-btn" class="modal-create-btn">학급 생성</button>
+                </div>
+
+                <!-- 우측 상단 X -->
                 <button onclick="this.closest('.modal').remove()" class="modal-close-x">✕</button>
             `);
             
