@@ -27,31 +27,32 @@ class ClassManager {
         try {
             firebase.auth().onAuthStateChanged(async (user) => {
                 if (!user) return;
-                const snapshot = await firebase.database().ref('users/' + user.uid + '/classes').once('value');
-                const classes = [];
-                snapshot.forEach(child => {
-                    classes.push({ id: child.key, ...child.val() });
-                });
-                await this.renderClasses(classes, user.uid);
+                const userSnap = await firebase.database().ref('users/' + user.uid).once('value');
+                const userData = userSnap.val();
+
+                if (!userData) {
+                    console.log("No user data found.");
+                    return;
+                }
+
+                const classes = userData.classes ? Object.entries(userData.classes).map(([id, val]) => ({ id, ...val })) : [];
+                const allTeachers = userData.teachers ? Object.entries(userData.teachers).map(([id, val]) => ({ id, ...val })) : [];
+                const allStudents = userData.students ? Object.entries(userData.students).map(([id, val]) => ({ id, ...val })) : [];
+
+                await this.renderClasses(classes, allTeachers, allStudents);
             });
         } catch (error) {
             alert('학급 목록을 불러오는 중 오류가 발생했습니다.');
         }
     }
 
-    async renderClasses(classes, uid) {
+    async renderClasses(classes, allTeachers, allStudents) {
         this.classList.innerHTML = '';
+
         for (const classItem of classes) {
-            const [teachersSnap, studentsSnap] = await Promise.all([
-                firebase.database().ref('users/' + uid + '/teachers').orderByChild('classId').equalTo(classItem.id).once('value'),
-                firebase.database().ref('users/' + uid + '/students').orderByChild('classId').equalTo(classItem.id).once('value')
-            ]);
-            const teachers = [];
-            teachersSnap.forEach(child => teachers.push(child.val().name));
-            const students = [];
-            studentsSnap.forEach(child => {
-                students.push({ id: child.key, ...child.val() });
-            });
+            const teachers = allTeachers.filter(t => t.classId === classItem.id).map(t => t.name);
+            const students = allStudents.filter(s => s.classId === classItem.id);
+
             const classCard = document.createElement('div');
             classCard.className = 'class-card';
             classCard.dataset.classId = String(classItem.id);
@@ -307,25 +308,34 @@ class ClassManager {
         try {
             const user = firebase.auth().currentUser;
             if (!user) throw new Error('로그인 필요');
-            const classSnap = await firebase.database().ref('users/' + user.uid + '/classes/' + classId).once('value');
-            const classData = classSnap.val();
+
+            const userSnap = await firebase.database().ref(`users/${user.uid}`).once('value');
+            const userData = userSnap.val();
+            if (!userData) {
+                alert('사용자 데이터를 찾을 수 없습니다.');
+                return;
+            }
+
+            const classData = userData.classes ? userData.classes[classId] : null;
             if (!classData) {
                 alert('학급 정보를 찾을 수 없습니다.');
                 return;
             }
-            // 최신 teachers/students 데이터를 가져온 후에 detailPageHTML 생성
-            const teachersSnap = await firebase.database().ref('users/' + user.uid + '/teachers').orderByChild('classId').equalTo(classId).once('value');
-            const teachers = [];
-            teachersSnap.forEach(child => teachers.push({ id: child.key, ...child.val() }));
-            const studentsSnap = await firebase.database().ref('users/' + user.uid + '/students').orderByChild('classId').equalTo(classId).once('value');
-            const students = [];
-            studentsSnap.forEach(child => {
-                students.push({ id: child.key, ...child.val() });
-            });
-            classData.teachers = teachers;
-            classData.students = students;
+            classData.name = classData.name || '이름 없음'; // Fallback for class name
+
+            const allTeachers = userData.teachers ? Object.entries(userData.teachers).map(([id, val]) => ({ id, ...val })) : [];
+            const teachers = allTeachers.filter(t => t.classId === classId);
+
+            const allStudents = userData.students ? Object.entries(userData.students).map(([id, val]) => ({ id, ...val })) : [];
+            const students = allStudents.filter(s => s.classId === classId);
+
             this.currentClassId = classId;
-            // detailPageHTML을 최신 데이터로 생성
+
+            const existingDetailPage = document.querySelector('.detail-page');
+            if (existingDetailPage) {
+                existingDetailPage.remove();
+            }
+
             const detailPageHTML = `
                 <div class="detail-page">
                     <div class="detail-header">
@@ -335,45 +345,52 @@ class ClassManager {
                     <div class="detail-content">
                         <div class="detail-section">
                             <h3>선생님 목록</h3>
-                            <div class="teachers-list">
-                                ${classData.teachers.length > 0 ? 
-                                    classData.teachers.map(teacher => `
-                                        <div class="teacher-item">
-                                            <span>${teacher.name}</span>
-                                            <button onclick="window.classManager.showDeleteTeacherModal('${teacher.id}', '${teacher.name}')" class="delete-icon-btn" title="선생님 삭제"></button>
-                                        </div>
-                                    `).join('') : 
-                                    '<p style="text-align: center; color: #6c757d; font-style: italic; padding: 20px;">등록된 선생님이 없습니다.</p>'
-                                }
-                            </div>
+                            <div class="teachers-list"></div>
                             <button onclick="window.classManager.showAddTeacherForm()" class="add-btn">선생님 추가</button>
                         </div>
                         <div class="detail-section">
                             <h3>학생 목록</h3>
-                            <div class="students-list">
-                                ${classData.students.length > 0 ? 
-                                    classData.students.map(student => `
-                                        <div class="student-item">
-                                            <span>${student.name}</span>
-                                            <button onclick="window.classManager.showDeleteStudentModal('${student.id}', '${student.name}')" class="delete-icon-btn" title="학생 삭제"></button>
-                                        </div>
-                                    `).join('') : 
-                                    '<p style="text-align: center; color: #6c757d; font-style: italic; padding: 20px;">등록된 학생이 없습니다.</p>'
-                                }
-                            </div>
+                            <div class="students-list"></div>
                             <button onclick="window.classManager.showAddStudentForm()" class="add-btn">학생 추가</button>
                         </div>
                     </div>
                 </div>
             `;
-            // 기존 상세보기 페이지 제거
-            const existingDetailPage = document.querySelector('.detail-page');
-            if (existingDetailPage) {
-                existingDetailPage.remove();
-            }
-            // 새로운 상세보기 페이지 추가
             document.getElementById('main-section').insertAdjacentHTML('beforeend', detailPageHTML);
+
+            const teachersListContainer = document.querySelector('.detail-page .teachers-list');
+            const studentsListContainer = document.querySelector('.detail-page .students-list');
+
+            if (teachers.length > 0) {
+                teachers.forEach(teacher => {
+                    const teacherElement = document.createElement('div');
+                    teacherElement.className = 'teacher-item';
+                    teacherElement.innerHTML = `
+                        <span>${teacher.name}</span>
+                        <button onclick="window.classManager.showDeleteTeacherModal('${teacher.id}', '${teacher.name}')" class="delete-icon-btn" title="선생님 삭제"></button>
+                    `;
+                    teachersListContainer.appendChild(teacherElement);
+                });
+            } else {
+                teachersListContainer.innerHTML = '<p style="text-align: center; color: #6c757d; font-style: italic; padding: 20px;">등록된 선생님이 없습니다.</p>';
+            }
+
+            if (students.length > 0) {
+                students.forEach(student => {
+                    const studentElement = document.createElement('div');
+                    studentElement.className = 'student-item';
+                    studentElement.innerHTML = `
+                        <span>${student.name}</span>
+                        <button onclick="window.classManager.showDeleteStudentModal('${student.id}', '${student.name}')" class="delete-icon-btn" title="학생 삭제"></button>
+                    `;
+                    studentsListContainer.appendChild(studentElement);
+                });
+            } else {
+                studentsListContainer.innerHTML = '<p style="text-align: center; color: #6c757d; font-style: italic; padding: 20px;">등록된 학생이 없습니다.</p>';
+            }
+
         } catch (error) {
+            console.error('학급 정보 로딩 오류:', error);
             alert('학급 정보를 불러오는 중 오류가 발생했습니다.');
         }
     }
@@ -571,17 +588,19 @@ class ClassManager {
     }
 
     renderTeachers(teachers) {
-        this.teachersList.innerHTML = '';
+        const teachersList = document.querySelector('.teachers-list');
+        teachersList.innerHTML = '';
         teachers.forEach(teacher => {
             const teacherElement = document.createElement('div');
             teacherElement.className = 'teacher-item';
             teacherElement.innerHTML = `
-                <p>${teacher.name}</p>
-                <button onclick="window.classManager.deleteTeacher(${teacher.id})">삭제</button>
+                <span>${teacher.name}</span>
+                <button onclick="window.classManager.showDeleteTeacherModal('${teacher.id}', '${teacher.name}')" class="delete-icon-btn" title="선생님 삭제">삭제</button>
             `;
-            this.teachersList.appendChild(teacherElement);
+            teachersList.appendChild(teacherElement);
         });
     }
+    
 
     renderStudents(students) {
         this.studentsList.innerHTML = '';
