@@ -35,6 +35,24 @@ document.addEventListener('DOMContentLoaded', () => {
             fullStatisticsSection.classList.remove('hidden');
         });
     }
+
+    // 시계 기능
+    const clockElement = document.getElementById('clock');
+    if (clockElement) {
+        function updateClock() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const date = String(now.getDate()).padStart(2, '0');
+            const day = ['일', '월', '화', '수', '목', '금', '토'][now.getDay()];
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            clockElement.innerHTML = `${year}년 ${month}월 ${date}일 (${day}) ${hours}:${minutes}:${seconds}`;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+    }
 });
 
 function setupNavigation() {

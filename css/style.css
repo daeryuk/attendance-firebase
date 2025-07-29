@@ -1477,4 +1477,11 @@ input:focus, select:focus {
   color: #fc5c7d;
   transform: scale(1.2) rotate(90deg);
 }
-/* --- 모달 리디자인 끝 --- */ 
+/* --- 모달 리디자인 끝 --- */
+
+.clock {
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+} 
